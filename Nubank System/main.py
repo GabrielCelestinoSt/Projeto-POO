@@ -1,3 +1,8 @@
+#imports NECESSÁRIOS para criar enumeradores e usar o método datetime
+from datetime import datetime
+from enum import Enum
+
+
 class Cliente:
     def __init__(self,nome,cpf):
         self.nome = nome
@@ -30,6 +35,137 @@ class ContaPoupanca:
 
 
 #gabriel
+# Lista de enumeradores para definir o estado da fatura
+class EstadoFatura(Enum):
+    ABERTA = "Aberta"
+    FECHADA = "Fechada"
+    VENCIDA = "Vencida"
+    PAGA = "Paga"
+
+# Lista de enumeradores para definir o tipo da transação
+class TipoTransacao(Enum):
+    ENTRADA = "Entrada"
+    SAIDA = "Saída"
+    GUARDAR_CAIXINHA = "GuardarCaixinha"
+    COMPRA_ACOES = "CompraAções"
+
+
+# 1. Classe TRANSAÇÃO 
+class Transacao:
+    def __init__(self, tipo: TipoTransacao, meio: str, valor: float, destinatario: str, remetente: str):
+        self.tipo = tipo #recebe um variavel do tipo do enumerador
+        self.meio = meio
+        self.valor = valor
+        self.data = datetime.now() #puxa data atual
+        self.destinatario = destinatario
+        self.remetente = remetente
+
+    #isso é para printar o objeto todo
+    def __str__(self):
+        return f"{self.tipo.value} - R${self.valor:.2f} para {self.destinatario}"
+
+
+# 2. Classe PAGAMENTOS 
+# Classe Mãe
+class Pagamento:
+    def __init__(self, valor: float):
+        self.valor = valor
+        self.data = datetime.now()
+        self.confirmado = False
+
+    #método base, ele lança um erro
+    def processar(self):
+        raise NotImplementedError("Subclasses devem implementar o método processar()")
+
+#subclasses para boleto e pix
+class PagamentoBoleto(Pagamento):
+    def __init__(self, valor: float, codigo_barras: str):
+        super().__init__(valor)
+        self.codigo_barras = codigo_barras
+
+    def processar(self):
+        print(f"Processando Boleto: {self.codigo_barras} | Valor: R${self.valor:.2f}")
+        self.confirmado = True
+
+class PagamentoPix(Pagamento):
+    def __init__(self, valor: float, chave_pix: str):
+        super().__init__(valor)
+        self.chave_pix = chave_pix
+
+    def processar(self):
+        print(f"Processando PIX para chave: {self.chave_pix} | Valor: R${self.valor:.2f}")
+        self.confirmado = True
+
+
+# 3. classe FATURA 
+class Fatura:
+    def __init__(self, mes: int, dia_fechamento: int, data_vencimento: datetime):
+        self.mes = mes
+        self.dia_fechamento = dia_fechamento
+        self.data_vencimento = data_vencimento
+        self.estado = EstadoFatura.ABERTA
+        self.lista_de_objetos = []
+
+    @property
+    def valor_total(self):
+        return sum(transacao.valor for transacao in self.lista_de_objetos)
+
+    @property
+    def pagamento_minimo(self):
+        return self.valor_total * 0.15 
+
+    def adicionar_compra(self, transacao: Transacao):
+        if self.estado == EstadoFatura.ABERTA:
+            self.lista_de_objetos.append(transacao)
+        else:
+            print(f"Atenção: A fatura do mês {self.mes} já está {self.estado.value}.")
+
+    def pagar_fatura(self, pagamento: Pagamento):
+        pagamento.processar()
+        if pagamento.confirmado:
+            self.estado = EstadoFatura.PAGA
+            print(f"Fatura do mês {self.mes} paga com sucesso!\n")
+
+
+# --- 4. classe CARTÃO DE CRÉDITO ---
+class CartaoCredito:
+    def __init__(self, numero: str, titular: str, cvc: str, data_validade: str, limite: float, bandeira: str, nfc: bool):
+        #dados privados
+        self._numero = numero 
+        self._cvc = cvc
+        
+        self.titular = titular
+        self.data_validade = data_validade
+        self.limite = limite
+        self.bandeira = bandeira
+        self.nfc = nfc
+        self.fatura_atual = None 
+
+    @property
+    def limite_disponivel(self):
+        if self.fatura_atual:
+            return self.limite - self.fatura_atual.valor_total
+        return self.limite
+
+    def mostrar_cartao_seguro(self):
+        return f"**** **** **** {self._numero[-4:]}"
+
+    def vincular_fatura(self, fatura: Fatura):
+        self.fatura_atual = fatura
+
+    def passar_cartao(self, transacao: Transacao):
+        if not self.fatura_atual or self.fatura_atual.estado != EstadoFatura.ABERTA:
+            print("Não há fatura aberta para registrar a compra.")
+            return
+
+        if transacao.valor > self.limite_disponivel:
+            print(f"Compra negada! Limite disponível: R${self.limite_disponivel:.2f}")
+            return
+
+        self.fatura_atual.adicionar_compra(transacao)
+        print(f"Compra de R${transacao.valor:.2f} aprovada no cartão {self.mostrar_cartao_seguro()}.")
+
+
 #vinicius 
 
 class Usuario:
@@ -121,8 +257,37 @@ contaP3 = ContaPoupanca("000543210-3" , "3500")
 contaP4 = ContaPoupanca("000543210-4" , "3600")
 contaP5 = ContaPoupanca("000543210-5" , "3700")
 
+transacao_1 = Transacao(TipoTransacao.SAIDA, "Crédito", 150.50, "Supermercado Bom Preço", "João Silva")
+transacao_2 = Transacao(TipoTransacao.SAIDA, "Crédito", 89.90, "Livraria Leitura", "João Silva")
+transacao_3 = Transacao(TipoTransacao.SAIDA, "Crédito", 25.00, "Padaria Central", "João Silva")
+transacao_4 = Transacao(TipoTransacao.SAIDA, "Crédito", 200.00, "Posto Ipiranga", "João Silva")
+transacao_5 = Transacao(TipoTransacao.SAIDA, "Crédito", 59.99, "Farmácia Drogasil", "João Silva")
 
-##gabriel
+boleto_1 = PagamentoBoleto(150.50, "34191.09008 61713.957308 71444.640008 1 90000000015050")
+boleto_2 = PagamentoBoleto(89.90, "03399.87362 54000.000000 00018.234567 8 80000000008990")
+boleto_3 = PagamentoBoleto(25.00, "23793.38128 60064.093409 83000.041011 5 70000000002500")
+boleto_4 = PagamentoBoleto(200.00, "10499.12345 67890.123456 78901.234567 2 60000000020000")
+boleto_5 = PagamentoBoleto(59.99, "00190.00009 01234.567890 12345.678901 3 50000000005999")
+
+pix_1 = PagamentoPix(150.50, "joao.silva@email.com")
+pix_2 = PagamentoPix(89.90, "123.456.789-00")
+pix_3 = PagamentoPix(25.00, "+5511999999999")
+pix_4 = PagamentoPix(200.00, "d2b456-123f-45g7-89h0-1234567890ab") # Chave aleatória
+pix_5 = PagamentoPix(59.99, "maria.souza@email.com")
+
+
+fatura_jan = Fatura(mes=1, dia_fechamento=25, data_vencimento=datetime(2026, 2, 5))
+fatura_fev = Fatura(mes=2, dia_fechamento=25, data_vencimento=datetime(2026, 3, 5))
+fatura_mar = Fatura(mes=3, dia_fechamento=25, data_vencimento=datetime(2026, 4, 5))
+fatura_abr = Fatura(mes=4, dia_fechamento=25, data_vencimento=datetime(2026, 5, 5))
+fatura_mai = Fatura(mes=5, dia_fechamento=25, data_vencimento=datetime(2026, 6, 5))
+
+cartao_1 = CartaoCredito("1111222233334444", "João Silva", "123", "12/29", 1500.00, "Mastercard", True)
+cartao_2 = CartaoCredito("5555666677778888", "Maria Souza", "456", "10/30", 3000.00, "Visa", True)
+cartao_3 = CartaoCredito("9999000011112222", "Carlos Lima", "789", "05/27", 800.00, "Elo", False)
+cartao_4 = CartaoCredito("3333444455556666", "Ana Costa", "321", "08/28", 5000.00, "Mastercard", True)
+cartao_5 = CartaoCredito("7777888899990000", "Pedro Alves", "654", "01/31", 10000.00, "Visa", False)
+
 #vinicius
 
 u1 = Usuario(1, "João Silva", "joao@email.com", "11999999999")
