@@ -212,7 +212,84 @@ class Atendimento:
 
 
 #Matheus 
+# Classe Funcionario
+class Funcionario:
+    def _init_(self, nome, cargo):
+        self.nome = nome
+        self.cargo = cargo
+
+    def _str_(self):
+        return f"Funcionario({self.nome}, {self.cargo})"
+
+# Classe AgenciaDigital
+class AgenciaDigital:
+    def _init_(self, codigo, cidade):
+        self.codigo = codigo
+        self.cidade = cidade
+
+    def _str_(self):
+        return f"AgenciaDigital({self.codigo}, {self.cidade})"
+
+
 #kauá
+class LimiteCartao:
+    def __init__(self, id, nome_cliente, limite_total, gasto_atual):
+        self.id = id
+        self.cliente = nome_cliente
+        self._total = limite_total        # encapsulado
+        self._gasto = gasto_atual         # encapsulado
+
+    # método para calcular disponível (abstração)
+    def calcular_disponivel(self):
+        return self._total - self._gasto
+
+    # método para gastar valor
+    def gastar(self, valor):
+        if valor > 0 and valor <= self.calcular_disponivel():
+            self._gasto += valor
+            print(f"Gasto de R${valor:.2f} realizado.")
+        else:
+            print("Limite insuficiente ou valor inválido.")
+
+    # método para pagamento (reduz gasto)
+    def pagar_fatura(self, valor):
+        if valor > 0:
+            self._gasto -= valor
+            if self._gasto < 0:
+                self._gasto = 0
+            print(f"Pagamento de R${valor:.2f} realizado.")
+        else:
+            print("Valor inválido.")
+
+    def __str__(self):
+        return f"LimiteCartao({self.cliente}, Disponível: R${self.calcular_disponivel():.2f})"
+
+
+class HistoricoTransferencia:
+    def __init__(self, id, data, valor, recebedor, tipo):
+        self.id = id
+        self.data = data
+        self.valor = valor
+        self.recebedor = recebedor
+        self.tipo = tipo
+
+    def __str__(self):
+        return f"{self.data} - R${self.valor:.2f} para {self.recebedor} ({self.tipo})"
+
+# Matheus
+# Funcionários
+f1 = Funcionario("Carlos Silva", "Gerente")
+f2 = Funcionario("Ana Souza", "Atendente")
+f3 = Funcionario("Bruno Lima", "Analista")
+f4 = Funcionario("Juliana Costa", "Supervisora")
+f5 = Funcionario("Pedro Alves", "Caixa")
+
+# Agências Digitais
+a1 = AgenciaDigital(101, "São Paulo")
+a2 = AgenciaDigital(102, "Rio de Janeiro")
+a3 = AgenciaDigital(103, "Belo Horizonte")
+a4 = AgenciaDigital(104, "Curitiba")
+a5 = AgenciaDigital(105, "Porto Alegre")
 
 cliente1 = Cliente("cliente1" , "000.000.000-20")
 cliente2 = Cliente("cliente2" , "111.111.111-21")
@@ -297,5 +374,15 @@ a3 = Atendimento(3, u3, "Dúvida sobre produto", "aberto")
 a4 = Atendimento(4, u4, "Solicitação de reembolso", "fechado")
 a5 = Atendimento(5, u5, "Alteração de dados", "aberto")
 
-#Matheus 
 #kauá
+cartao1 = LimiteCartao(1, "João Silva", 5000.0, 1200.0)
+cartao2 = LimiteCartao(2, "Maria Oliveira", 2500.0, 2450.0)
+cartao3 = LimiteCartao(3, "Carlos Souza", 10000.0, 0.0)
+cartao4 = LimiteCartao(4, "Ana Costa", 1500.0, 800.0)
+cartao5 = LimiteCartao(5, "Bruno Alves", 3000.0, 3100.0)
+
+transf1 = HistoricoTransferencia(1, "20/03/2026", 150.0, "Mercado Central", "Pix")
+transf2 = HistoricoTransferencia(2, "21/03/2026", 45.90, "Netflix", "Crédito")
+transf3 = HistoricoTransferencia(3, "22/03/2026", 1200.0, "Aluguel", "TED")
+transf4 = HistoricoTransferencia(4, "23/03/2026", 15.00, "Padaria Pão de Mel", "Débito")
+transf5 = HistoricoTransferencia(5, "24/03/2026", 350.0, "Posto Combustível", "Crédito")
